@@ -1,9 +1,8 @@
 package club.minnced.discord.jdave;
 
-import static club.minnced.discord.jdave.ffi.LibDave.isNull;
-
 import club.minnced.discord.jdave.ffi.LibDave;
 import club.minnced.discord.jdave.ffi.LibDaveSessionBinding;
+import club.minnced.discord.jdave.ffi.NativeUtils;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
@@ -68,11 +67,11 @@ public class DaveSessionImpl implements AutoCloseable {
             ByteBuffer proposals, List<String> userIds, Consumer<ByteBuffer> sendMLSCommitWelcome) {
         MemorySegment welcome = LibDaveSessionBinding.processProposals(session, proposals, userIds);
         try {
-            if (!isNull(welcome)) {
+            if (!NativeUtils.isNull(welcome)) {
                 sendMLSCommitWelcome.accept(welcome.asByteBuffer());
             }
         } finally {
-            if (!isNull(welcome)) {
+            if (!NativeUtils.isNull(welcome)) {
                 LibDave.free(welcome);
             }
         }
@@ -82,9 +81,9 @@ public class DaveSessionImpl implements AutoCloseable {
     public boolean processWelcome(ByteBuffer welcome, List<String> userIds) {
         MemorySegment roster = LibDaveSessionBinding.processWelcome(session, welcome, userIds);
         try {
-            return !isNull(roster);
+            return !NativeUtils.isNull(roster);
         } finally {
-            if (!isNull(roster)) {
+            if (!NativeUtils.isNull(roster)) {
                 LibDaveSessionBinding.destroyWelcomeResult(roster);
             }
         }

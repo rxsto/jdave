@@ -8,7 +8,9 @@ import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.nio.ByteBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 public class LibDave {
     static final Linker LINKER = Linker.nativeLinker();
@@ -22,9 +24,10 @@ public class LibDave {
 
     private LibDave() {}
 
+    static final Logger log = LoggerFactory.getLogger(LibDave.class);
     static final MethodHandle daveMaxSupportedProtocolVersion;
     static final MethodHandle daveSetLogSinkCallback;
-    public static final MethodHandle free;
+    static final MethodHandle free;
 
     static {
         try {
@@ -42,6 +45,26 @@ public class LibDave {
         } catch (Throwable e) {
             throw new ExceptionInInitializerError(e);
         }
+
+        setLogSinkCallback(Arena.global(), (severity, file, line, message) -> {
+            Level level =
+                    switch (severity) {
+                        case UNKNOWN -> Level.INFO;
+                        case VERBOSE -> Level.TRACE;
+                        case INFO -> Level.INFO;
+                        case WARNING -> Level.WARN;
+                        case ERROR -> Level.ERROR;
+                        case NONE -> Level.INFO;
+                    };
+
+            int pathSeparatorIndex = Math.max(file.lastIndexOf('/'), file.lastIndexOf('\\'));
+            String fileName = file;
+            if (pathSeparatorIndex >= 0) {
+                fileName = file.substring(pathSeparatorIndex + 1);
+            }
+
+            log.atLevel(level).log("{}:{} {}", fileName, line, message);
+        });
     }
 
     public static void free(MemorySegment segment) {
@@ -84,10 +107,7 @@ public class LibDave {
         LogSinkCallbackMapper upcallMapper = new LogSinkCallbackMapper(logSinkCallback);
 
         MemorySegment upcall = LINKER.upcallStub(
-                upcallMapper.getMethodHandle(),
-                FunctionDescriptor.ofVoid(
-                        JAVA_INT, ADDRESS.withTargetLayout(JAVA_BYTE), JAVA_INT, ADDRESS.withTargetLayout(JAVA_BYTE)),
-                arena);
+                upcallMapper.getMethodHandle(), FunctionDescriptor.ofVoid(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS), arena);
 
         try {
             daveSetLogSinkCallback.invoke(upcall);
@@ -97,22 +117,17 @@ public class LibDave {
         }
     }
 
-    public static boolean isNull(MemorySegment segment) {
-        return segment == null || MemorySegment.NULL.equals(segment);
-    }
-
     // typedef void (*DAVELogSinkCallback)(DAVELoggingSeverity severity,
     //                                    const char* file,
     //                                    int line,
     //                                    const char* message);
     public interface LogSinkCallback {
-        void onLogSink(DaveLoggingSeverity severity, ByteBuffer file, int line, ByteBuffer message);
+        void onLogSink(DaveLoggingSeverity severity, String file, int line, String message);
     }
 
     private static class LogSinkCallbackMapper {
-        private static final MethodHandles.Lookup LOOKUP = MethodHandles.publicLookup();
         private static final MethodType TYPE =
-                MethodType.methodType(Integer.TYPE, MemorySegment.class, Integer.TYPE, MemorySegment.class);
+                MethodType.methodType(void.class, Integer.TYPE, MemorySegment.class, Integer.TYPE, MemorySegment.class);
 
         private final LogSinkCallback logSinkCallback;
 
@@ -131,15 +146,13 @@ public class LibDave {
                         default -> DaveLoggingSeverity.UNKNOWN;
                     };
 
-            logSinkCallback.onLogSink(severityEnum, file.asByteBuffer(), line, message.asByteBuffer());
+            logSinkCallback.onLogSink(
+                    severityEnum, NativeUtils.asJavaString(file), line, NativeUtils.asJavaString(message));
         }
 
         MethodHandle getMethodHandle() {
             try {
-                return LOOKUP.bind(
-                        this,
-                        "onCallback",
-                        MethodType.methodType(Integer.TYPE, MemorySegment.class, Integer.TYPE, MemorySegment.class));
+                return MethodHandles.lookup().bind(this, "onCallback", TYPE);
             } catch (NoSuchMethodException | IllegalAccessException e) {
                 throw new IllegalStateException(e);
             }
