@@ -1,6 +1,7 @@
 package club.minnced.discord.jdave.ffi;
 
 import static club.minnced.discord.jdave.ffi.LibDave.*;
+import static club.minnced.discord.jdave.ffi.NativeUtils.toSizeT;
 import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
@@ -234,9 +235,9 @@ public class LibDaveSessionBinding {
             daveSessionProcessProposals.invoke(
                     session,
                     MemorySegment.ofBuffer(proposals),
-                    proposals.remaining(),
+                    toSizeT(proposals.remaining()),
                     recognizedUserIdsArray,
-                    recognizedUserIds.size(),
+                    toSizeT(recognizedUserIds.size()),
                     welcomeArrayPtr,
                     welcomeSizePtr);
 
@@ -248,8 +249,8 @@ public class LibDaveSessionBinding {
 
     public static MemorySegment processCommit(MemorySegment session, ByteBuffer commit) {
         try {
-            return (MemorySegment)
-                    daveSessionProcessCommit.invoke(session, MemorySegment.ofBuffer(commit), commit.remaining());
+            return (MemorySegment) daveSessionProcessCommit.invoke(
+                    session, MemorySegment.ofBuffer(commit), toSizeT(commit.remaining()));
         } catch (Throwable e) {
             throw new LibDaveBindingException(e);
         }
@@ -292,9 +293,9 @@ public class LibDaveSessionBinding {
             return (MemorySegment) daveSessionProcessWelcome.invoke(
                     session,
                     MemorySegment.ofBuffer(welcome),
-                    welcome.remaining(),
+                    toSizeT(welcome.remaining()),
                     recognizedUserIdsArray,
-                    recognizedUserIds.size());
+                    toSizeT(recognizedUserIds.size()));
         } catch (Throwable e) {
             throw new LibDaveBindingException(e);
         }

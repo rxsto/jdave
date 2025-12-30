@@ -11,4 +11,12 @@ public class NativeUtils {
     public static boolean isNull(MemorySegment segment) {
         return segment == null || MemorySegment.NULL.equals(segment);
     }
+
+    public static Number toSizeT(Number number) {
+        if (LibDave.C_SIZE.byteSize() == 8) {
+            return number.longValue();
+        } else {
+            return number.intValue();
+        }
+    }
 }

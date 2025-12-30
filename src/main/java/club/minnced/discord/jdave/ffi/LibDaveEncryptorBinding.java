@@ -1,6 +1,7 @@
 package club.minnced.discord.jdave.ffi;
 
 import static club.minnced.discord.jdave.ffi.LibDave.*;
+import static club.minnced.discord.jdave.ffi.NativeUtils.toSizeT;
 import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.FunctionDescriptor;
@@ -116,7 +117,7 @@ public class LibDaveEncryptorBinding {
 
     public static long getMaxCiphertextByteSize(MemorySegment encryptor, int mediaType, long frameSize) {
         try {
-            return sizeToLong(daveEncryptorGetMaxCiphertextByteSize.invoke(encryptor, mediaType, frameSize));
+            return sizeToLong(daveEncryptorGetMaxCiphertextByteSize.invoke(encryptor, mediaType, toSizeT(frameSize)));
         } catch (Throwable e) {
             throw new LibDaveBindingException(e);
         }
@@ -135,9 +136,9 @@ public class LibDaveEncryptorBinding {
                     mediaType,
                     ssrc,
                     frame,
-                    frame.byteSize(),
+                    toSizeT(frame.byteSize()),
                     encryptedFrame,
-                    encryptedFrame.byteSize(),
+                    toSizeT(encryptedFrame.byteSize()),
                     bytesWritten);
         } catch (Throwable e) {
             throw new LibDaveBindingException(e);
