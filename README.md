@@ -12,7 +12,31 @@ To implement these bindings, this library uses Java **Foreign Function & Memory 
 
 ## Supported Platforms
 
-- Linux x64
+API:
+
+[![](https://img.shields.io/maven-central/v/club.minnced/jdave-api?color=blue&label=jdave-api)](https://search.maven.org/artifact/club.minnced/jdave-api)
+
+Linux:
+
+[![](https://img.shields.io/maven-central/v/club.minnced/jdave-native-linux-x86-64?color=blue&label=linux-x86-64&logo=linux&logoColor=white)](https://search.maven.org/artifact/club.minnced/jdave-native-linux-x86-64)
+
+## Installation
+
+The coordinates for the dependency include the target platform, currently only one is supported.
+
+```gradle
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Interface to use for libraries
+    implementation("club.minnced:jdave-api:0.0.1")
+    
+    // Compiled natives for libdave for the specified platform
+    implementation("club.minnced:jdave-native-linux-x86-64:0.0.1")
+}
+```
 
 ## Example: JDA
 
