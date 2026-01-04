@@ -107,9 +107,10 @@ public class DaveSessionManager implements AutoCloseable {
         }
     }
 
+    @SuppressWarnings("resource")
     public void addUser(long userId) {
         log.debug("Adding user {}", userId);
-        decryptors.put(userId, DaveDecryptor.create());
+        decryptors.computeIfAbsent(userId, id -> DaveDecryptor.create());
     }
 
     public void removeUser(long userId) {
