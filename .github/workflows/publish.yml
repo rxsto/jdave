@@ -51,6 +51,7 @@ jobs:
   macos:
     name: Publish Universal Darwin
     runs-on: macos-latest
+    environment: maven-central-release
     steps:
       - uses: actions/checkout@v6
         with:
