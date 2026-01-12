@@ -1,14 +1,15 @@
 package club.minnced.discord.jdave.ffi;
 
 import java.lang.foreign.*;
-import java.nio.charset.StandardCharsets;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class NativeUtils {
     @NonNull
     public static String asJavaString(@NonNull MemorySegment nullTerminatedString) {
-        return nullTerminatedString.reinterpret(4096).getString(0, StandardCharsets.UTF_8);
+        return nullTerminatedString
+                .reinterpret(12288) // 12K
+                .getString(0);
     }
 
     public static boolean isNull(@Nullable MemorySegment segment) {
