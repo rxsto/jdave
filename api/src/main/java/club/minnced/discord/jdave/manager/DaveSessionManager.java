@@ -237,7 +237,13 @@ public class DaveSessionManager implements AutoCloseable {
 
     private void executeProtocolTransition(int transitionId) {
         Integer protocolVersion = preparedTransitions.remove(transitionId);
+
         if (protocolVersion == null) {
+            if (transitionId == DaveConstants.INIT_TRANSITION_ID) {
+                log.debug("Passing through transition with ID 0");
+                return;
+            }
+
             log.warn("Unexpected Transition ID {}", transitionId);
             return;
         }
